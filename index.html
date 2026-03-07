@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>La Plata Primero — Reportá, mejorá tu ciudad</title>
+  <meta name="description" content="La app que conecta vecinos con el municipio. Reportá baches, luminarias y problemas urbanos en La Plata con un solo toque."/>
+  <link rel="icon" type="image/png" href="./favicon.png"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --jac: #5D2D91;
+      --jac-light: #7B3FB8;
+      --jac-dark: #3D1A6E;
+      --jac-glow: rgba(93, 45, 145, 0.35);
+      --cream: #FAF7F2;
+      --ink: #0F0A1E;
+      --gray: #6B7280;
+      --green: #22C55E;
+      --amber: #F59E0B;
+      --blue: #3B82F6;
+      --white: #FFFFFF;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--ink);
+      color: var(--white);
+      overflow-x: hidden;
+    }
+
+    /* ── NOISE TEXTURE OVERLAY ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.4;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 48px;
+      background: rgba(15, 10, 30, 0.7);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .nav-logo {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 18px;
+      color: var(--white);
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .nav-logo span {
+      display: inline-block;
+      width: 28px; height: 28px;
+      background: var(--jac);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: rgba(255,255,255,0.6);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 400;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover { color: var(--white); }
+
+    .nav-cta {
+      background: var(--jac);
+      color: var(--white) !important;
+      padding: 9px 20px;
+      border-radius: 100px;
+      font-weight: 500 !important;
+      transition: background 0.2s, transform 0.2s !important;
+    }
+
+    .nav-cta:hover {
+      background: var(--jac-light) !important;
+      transform: translateY(-1px);
+    }
+
+    /* ── HERO ── */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 120px 48px 80px;
+      overflow: hidden;
+    }
+
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 60% 40%, rgba(93,45,145,0.25) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 40% at 20% 80%, rgba(59,130,246,0.1) 0%, transparent 60%);
+    }
+
+    .hero-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+      mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 20%, transparent 100%);
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 1;
+      max-width: 640px;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(93,45,145,0.2);
+      border: 1px solid rgba(93,45,145,0.4);
+      padding: 6px 14px;
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 500;
+      color: #C4A4FF;
+      margin-bottom: 28px;
+      animation: fadeUp 0.6s ease both;
+    }
+
+    .hero-badge::before {
+      content: '';
+      width: 6px; height: 6px;
+      background: #22C55E;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #22C55E;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    h1 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: clamp(48px, 6vw, 80px);
+      line-height: 1.0;
+      letter-spacing: -2px;
+      margin-bottom: 24px;
+      animation: fadeUp 0.6s 0.1s ease both;
+    }
+
+    h1 em {
+      font-style: normal;
+      color: var(--jac-light);
+    }
+
+    .hero-sub {
+      font-size: 18px;
+      line-height: 1.7;
+      color: rgba(255,255,255,0.6);
+      max-width: 480px;
+      margin-bottom: 40px;
+      font-weight: 300;
+      animation: fadeUp 0.6s 0.2s ease both;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      animation: fadeUp 0.6s 0.3s ease both;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--jac);
+      color: var(--white);
+      padding: 16px 28px;
+      border-radius: 14px;
+      font-size: 15px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: all 0.25s;
+      border: none;
+      cursor: pointer;
+    }
+
+    .btn-primary:hover {
+      background: var(--jac-light);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 40px var(--jac-glow);
+    }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255,255,255,0.06);
+      color: var(--white);
+      padding: 16px 28px;
+      border-radius: 14px;
+      font-size: 15px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: all 0.25s;
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255,255,255,0.1);
+      transform: translateY(-2px);
+    }
+
+    /* ── PHONE MOCKUP ── */
+    .hero-phone {
+      position: absolute;
+      right: 6%;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 280px;
+      animation: floatPhone 6s ease-in-out infinite, fadeUp 0.8s 0.4s ease both;
+    }
+
+    @keyframes floatPhone {
+      0%, 100% { transform: translateY(-50%) rotate(-2deg); }
+      50% { transform: translateY(calc(-50% - 16px)) rotate(2deg); }
+    }
+
+    .phone-frame {
+      background: #1A0D2E;
+      border-radius: 40px;
+      padding: 12px;
+      border: 2px solid rgba(93,45,145,0.5);
+      box-shadow:
+        0 40px 80px rgba(0,0,0,0.6),
+        0 0 0 1px rgba(255,255,255,0.05),
+        inset 0 1px 0 rgba(255,255,255,0.1);
+    }
+
+    .phone-screen {
+      background: #FAF7F2;
+      border-radius: 30px;
+      overflow: hidden;
+      height: 500px;
+      position: relative;
+    }
+
+    .phone-notch {
+      width: 80px; height: 24px;
+      background: #1A0D2E;
+      border-radius: 0 0 16px 16px;
+      margin: 0 auto;
+    }
+
+    .phone-header {
+      background: var(--jac);
+      padding: 16px 20px 20px;
+      color: white;
+    }
+
+    .phone-header-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .phone-header-sub {
+      font-size: 11px;
+      opacity: 0.7;
+      margin-top: 2px;
+    }
+
+    .phone-body {
+      padding: 16px;
+      background: #FAF7F2;
+    }
+
+    .phone-btn {
+      background: var(--jac);
+      color: white;
+      border-radius: 12px;
+      padding: 14px;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .phone-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .phone-stat {
+      background: white;
+      border-radius: 10px;
+      padding: 10px 8px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    .phone-stat-val {
+      font-family: 'Syne', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--jac);
+    }
+
+    .phone-stat-lbl {
+      font-size: 9px;
+      color: #9CA3AF;
+      margin-top: 2px;
+    }
+
+    .phone-card {
+      background: white;
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .phone-card-icon {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .phone-card-info { flex: 1; }
+    .phone-card-title { font-size: 12px; font-weight: 600; color: #1f2937; }
+    .phone-card-sub { font-size: 10px; color: #9CA3AF; margin-top: 2px; }
+
+    .phone-badge {
+      font-size: 9px;
+      font-weight: 700;
+      padding: 3px 7px;
+      border-radius: 20px;
+    }
+
+    /* ── STATS BAR ── */
+    .stats-bar {
+      position: relative;
+      z-index: 1;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      background: rgba(255,255,255,0.02);
+      padding: 40px 48px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+    }
+
+    .stat-item {
+      padding: 0 40px;
+      border-right: 1px solid rgba(255,255,255,0.06);
+      animation: fadeUp 0.6s ease both;
+    }
+
+    .stat-item:last-child { border-right: none; }
+
+    .stat-number {
+      font-family: 'Syne', sans-serif;
+      font-size: 48px;
+      font-weight: 800;
+      color: var(--white);
+      letter-spacing: -2px;
+      line-height: 1;
+    }
+
+    .stat-number span { color: var(--jac-light); }
+
+    .stat-label {
+      font-size: 13px;
+      color: rgba(255,255,255,0.4);
+      margin-top: 6px;
+      font-weight: 300;
+    }
+
+    /* ── HOW IT WORKS ── */
+    .section {
+      position: relative;
+      z-index: 1;
+      padding: 100px 48px;
+    }
+
+    .section-tag {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--jac-light);
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(32px, 4vw, 52px);
+      font-weight: 800;
+      letter-spacing: -1.5px;
+      line-height: 1.1;
+      max-width: 520px;
+      margin-bottom: 60px;
+    }
+
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+      background: rgba(255,255,255,0.04);
+      border-radius: 24px;
+      overflow: hidden;
+    }
+
+    .step {
+      background: var(--ink);
+      padding: 48px 40px;
+      position: relative;
+      transition: background 0.3s;
+    }
+
+    .step:hover { background: rgba(93,45,145,0.1); }
+
+    .step-num {
+      font-family: 'Syne', sans-serif;
+      font-size: 72px;
+      font-weight: 800;
+      color: rgba(255,255,255,0.04);
+      line-height: 1;
+      margin-bottom: 24px;
+      letter-spacing: -3px;
+    }
+
+    .step-icon {
+      font-size: 36px;
+      margin-bottom: 20px;
+      display: block;
+    }
+
+    .step-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .step-desc {
+      font-size: 14px;
+      color: rgba(255,255,255,0.5);
+      line-height: 1.7;
+      font-weight: 300;
+    }
+
+    /* ── FEATURES ── */
+    .features-section {
+      background: var(--cream);
+      color: var(--ink);
+    }
+
+    .features-section .section-tag { color: var(--jac); }
+    .features-section .section-title { color: var(--ink); }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+    }
+
+    .feature-card {
+      background: white;
+      border-radius: 20px;
+      padding: 36px;
+      border: 1px solid rgba(0,0,0,0.06);
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--jac);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.3s;
+    }
+
+    .feature-card:hover::before { transform: scaleX(1); }
+    .feature-card:hover { transform: translateY(-4px); box-shadow: 0 20px 60px rgba(93,45,145,0.12); }
+
+    .feature-icon {
+      width: 56px; height: 56px;
+      border-radius: 16px;
+      background: rgba(93,45,145,0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      margin-bottom: 20px;
+    }
+
+    .feature-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 10px;
+    }
+
+    .feature-desc {
+      font-size: 14px;
+      color: #6B7280;
+      line-height: 1.7;
+      font-weight: 300;
+    }
+
+    .feature-card.highlight {
+      background: var(--jac);
+      border-color: transparent;
+    }
+
+    .feature-card.highlight .feature-icon { background: rgba(255,255,255,0.15); }
+    .feature-card.highlight .feature-title { color: white; }
+    .feature-card.highlight .feature-desc { color: rgba(255,255,255,0.7); }
+    .feature-card.highlight::before { background: white; }
+
+    /* ── CATEGORIES ── */
+    .categories-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 16px;
+      margin-top: 60px;
+    }
+
+    .category-item {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 16px;
+      padding: 24px 16px;
+      text-align: center;
+      transition: all 0.3s;
+      cursor: default;
+    }
+
+    .category-item:hover {
+      background: rgba(93,45,145,0.15);
+      border-color: rgba(93,45,145,0.4);
+      transform: translateY(-4px);
+    }
+
+    .category-emoji { font-size: 28px; margin-bottom: 10px; }
+    .category-name { font-size: 12px; color: rgba(255,255,255,0.6); font-weight: 500; }
+
+    /* ── CTA ── */
+    .cta-section {
+      background: var(--jac-dark);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cta-section::before {
+      content: '';
+      position: absolute;
+      top: -100px; right: -100px;
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(123,63,184,0.4) 0%, transparent 70%);
+    }
+
+    .cta-inner {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .cta-title {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(36px, 5vw, 64px);
+      font-weight: 800;
+      letter-spacing: -2px;
+      line-height: 1.05;
+      margin-bottom: 20px;
+    }
+
+    .cta-sub {
+      font-size: 17px;
+      color: rgba(255,255,255,0.65);
+      margin-bottom: 40px;
+      font-weight: 300;
+    }
+
+    .store-badges {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .store-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      background: white;
+      color: var(--ink);
+      padding: 14px 24px;
+      border-radius: 14px;
+      text-decoration: none;
+      transition: all 0.25s;
+    }
+
+    .store-badge:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 16px 48px rgba(0,0,0,0.3);
+    }
+
+    .store-badge-icon { font-size: 28px; }
+
+    .store-badge-text { text-align: left; }
+    .store-badge-small { font-size: 10px; color: #6B7280; }
+    .store-badge-name { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; }
+
+    /* ── FOOTER ── */
+    footer {
+      position: relative;
+      z-index: 1;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding: 40px 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .footer-logo {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 16px;
+      color: rgba(255,255,255,0.4);
+    }
+
+    .footer-copy {
+      font-size: 13px;
+      color: rgba(255,255,255,0.25);
+    }
+
+    .footer-domain {
+      font-size: 13px;
+      color: var(--jac-light);
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(32px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      nav { padding: 16px 24px; }
+      .nav-links { display: none; }
+      .hero { padding: 100px 24px 60px; }
+      .hero-phone { display: none; }
+      .stats-bar { grid-template-columns: repeat(2, 1fr); padding: 32px 24px; gap: 24px; }
+      .stat-item { border-right: none; padding: 0; }
+      .section { padding: 60px 24px; }
+      .steps-grid { grid-template-columns: 1fr; }
+      .features-grid { grid-template-columns: 1fr; }
+      .categories-grid { grid-template-columns: repeat(3, 1fr); }
+      footer { flex-direction: column; gap: 12px; text-align: center; padding: 32px 24px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-logo">
+      <img src="./arco.png" alt="Logo" style="width:44px;height:44px;object-fit:contain"/>
+      La Plata Primero
+    </div>
+    <ul class="nav-links">
+      <li><a href="#como-funciona">Cómo funciona</a></li>
+      <li><a href="#features">Funciones</a></li>
+      <li><a href="#categorias">Categorías</a></li>
+      <li><a href="#descargar" class="nav-cta">Descargar app</a></li>
+    </ul>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-grid"></div>
+
+    <div class="hero-content">
+      <div class="hero-badge">Disponible en iOS y Android</div>
+      <h1>Tu ciudad,<br/><em>tu voz.</em></h1>
+      <p class="hero-sub">
+        Reportá baches, luminarias rotas y problemas urbanos en La Plata con un solo toque. La IA detecta el problema, el municipio lo resuelve.
+      </p>
+      <div class="hero-actions">
+        <a href="#descargar" class="btn-primary">
+          📱 Descargar gratis
+        </a>
+        <a href="#como-funciona" class="btn-secondary">
+          Ver cómo funciona →
+        </a>
+      </div>
+    </div>
+
+    <!-- Phone mockup -->
+    <div class="hero-phone">
+      <img src="./screen1.jpg" alt="La Plata Primero App" style="height:500px;border-radius:36px;box-shadow:0 40px 80px rgba(0,0,0,0.6);border:2px solid rgba(93,45,145,0.5)"/>
+    </div>
+  </section>
+
+  <!-- STATS BAR -->
+  <div class="stats-bar">
+    <div class="stat-item reveal">
+      <div class="stat-number">6<span>+</span></div>
+      <div class="stat-label">Tipos de problemas reportables</div>
+    </div>
+    <div class="stat-item reveal">
+      <div class="stat-number">100<span>%</span></div>
+      <div class="stat-label">Gratuito para vecinos</div>
+    </div>
+    <div class="stat-item reveal">
+      <div class="stat-number">IA<span>✦</span></div>
+      <div class="stat-label">Detección automática de problemas</div>
+    </div>
+    <div class="stat-item reveal">
+      <div class="stat-number">GPS<span>✦</span></div>
+      <div class="stat-label">Ubicación automática al reportar</div>
+    </div>
+  </div>
+
+  <!-- HOW IT WORKS -->
+  <section class="section" id="como-funciona">
+    <div class="section-tag">Cómo funciona</div>
+    <h2 class="section-title">Tres pasos. Un vecino más empoderado.</h2>
+    <div class="steps-grid">
+      <div class="step reveal">
+        <div class="step-num">01</div>
+        <span class="step-icon">📷</span>
+        <div class="step-title">Abrí la app y sacá la foto</div>
+        <div class="step-desc">Al tocar "Reportar ahora", la cámara se abre automáticamente. Sin pasos extras, sin menús. Apuntá y fotografiá el problema.</div>
+      </div>
+      <div class="step reveal">
+        <div class="step-num">02</div>
+        <span class="step-icon">🤖</span>
+        <div class="step-title">La IA analiza el problema</div>
+        <div class="step-desc">Google Vision API analiza la imagen y detecta automáticamente si es un bache, luminaria rota, basura o problema pluvial. Podés corregirlo si hace falta.</div>
+      </div>
+      <div class="step reveal">
+        <div class="step-num">03</div>
+        <span class="step-icon">🔔</span>
+        <div class="step-title">Seguí el estado en tiempo real</div>
+        <div class="step-desc">Recibís notificaciones automáticas cuando el municipio actualiza tu reporte: pendiente, en proceso o resuelto.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="section features-section" id="features">
+    <div class="section-tag">Funciones</div>
+    <h2 class="section-title">Tecnología al servicio del vecino.</h2>
+    <div class="features-grid">
+      <div class="feature-card highlight reveal">
+        <div class="feature-icon">🧠</div>
+        <div class="feature-title">Inteligencia Artificial</div>
+        <div class="feature-desc">Google Cloud Vision analiza cada foto y clasifica automáticamente el tipo de problema. La app aprende del contexto urbano.</div>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon">📍</div>
+        <div class="feature-title">GPS Automático</div>
+        <div class="feature-desc">La ubicación exacta se captura automáticamente al reportar. El municipio sabe exactamente dónde está el problema sin que vos tengas que escribir nada.</div>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon">🗺️</div>
+        <div class="feature-title">Mapa de Reportes</div>
+        <div class="feature-desc">Visualizá todos los reportes de tu barrio en tiempo real. Filtrá por estado, tipo o zona. La ciudad entera, en tu pantalla.</div>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon">🔔</div>
+        <div class="feature-title">Notificaciones Push</div>
+        <div class="feature-desc">Te avisamos cuando el estado de tu reporte cambia. Transparencia total entre vecinos y municipio, sin necesidad de hacer seguimiento manual.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CATEGORIES -->
+  <section class="section" id="categorias">
+    <div class="section-tag">Categorías</div>
+    <h2 class="section-title">Todo lo que podés reportar.</h2>
+    <div class="categories-grid">
+      <div class="category-item reveal">
+        <div class="category-emoji">🕳️</div>
+        <div class="category-name">Baches</div>
+      </div>
+      <div class="category-item reveal">
+        <div class="category-emoji">💡</div>
+        <div class="category-name">Luminarias</div>
+      </div>
+      <div class="category-item reveal">
+        <div class="category-emoji">🗑️</div>
+        <div class="category-name">Basura</div>
+      </div>
+      <div class="category-item reveal">
+        <div class="category-emoji">🚶</div>
+        <div class="category-name">Veredas</div>
+      </div>
+      <div class="category-item reveal">
+        <div class="category-emoji">💧</div>
+        <div class="category-name">Pluviales</div>
+      </div>
+      <div class="category-item reveal">
+        <div class="category-emoji">📋</div>
+        <div class="category-name">Otros</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="section cta-section" id="descargar">
+    <div class="cta-inner">
+      <div class="section-tag" style="color:#C4A4FF">Descargá la app</div>
+      <h2 class="cta-title">La Plata merece lo mejor.<br/>Empezá hoy.</h2>
+      <p class="cta-sub">Gratuita para todos los vecinos. Disponible en iOS y Android.</p>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:20px">
+        <p style="font-size:12px;color:rgba(255,255,255,0.4);letter-spacing:2px;text-transform:uppercase">Próximamente disponible en</p>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center">
+          <a href="#"><img src="./appstore.png" alt="Download on App Store" style="height:54px;border-radius:10px;transition:transform 0.2s" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='translateY(0)'"/></a>
+          <a href="#"><img src="./googleplay.png" alt="Get it on Google Play" style="height:54px;border-radius:10px;transition:transform 0.2s" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='translateY(0)'"/></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-logo" style="display:flex;align-items:center;gap:8px"><img src="./arco.png" style="width:22px;height:22px;object-fit:contain;opacity:0.5"/> La Plata Primero</div>
+    <div class="footer-copy">© 2026 — Hecho por vecinos, para vecinos.</div>
+    <div class="footer-domain">laplataprimero.com.ar</div>
+  </footer>
+
+  <script>
+    // Scroll reveal
+    const reveals = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry, i) => {
+        if (entry.isIntersecting) {
+          setTimeout(() => entry.target.classList.add('visible'), i * 80);
+        }
+      });
+    }, { threshold: 0.1 });
+    reveals.forEach(el => observer.observe(el));
+  </script>
+</body>
+</html>
