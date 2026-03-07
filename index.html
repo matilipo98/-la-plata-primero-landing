@@ -723,7 +723,7 @@
       nav { padding: 16px 24px; }
       .nav-links { display: none; }
       .hero { padding: 100px 24px 60px; }
-      .hero-phone { display: flex; justify-content: center; margin-top: 32px; }
+      .hero-phone { display: flex; justify-content: center; margin-top: 24px; } .hero-phone img { height: 280px !important; }
       .stats-bar { grid-template-columns: repeat(2, 1fr); padding: 32px 24px; gap: 24px; }
       .stat-item { border-right: none; padding: 0; }
       .section { padding: 60px 24px; }
@@ -772,8 +772,49 @@
     </div>
 
     <!-- Phone mockup -->
-    <div class="hero-phone" style="animation:none;transform:none">
-      <img src="./screen1.jpg" alt="La Plata Primero App" style="height:500px;border-radius:36px;box-shadow:0 40px 80px rgba(0,0,0,0.6);border:2px solid rgba(93,45,145,0.5);animation:none;transform:none"/>
+    <div class="hero-phone">
+      <div class="phone-frame">
+        <div class="phone-screen">
+          <div class="phone-notch"></div>
+          <div class="phone-header">
+            <div class="phone-header-title" style="display:flex;align-items:center;gap:6px"><img src="./logo.png" style="width:16px;height:16px;filter:none"/> La Plata Primero</div>
+            <div class="phone-header-sub">Hola vecino 👋</div>
+          </div>
+          <div class="phone-body">
+            <div class="phone-btn">📷 Reportar ahora</div>
+            <div class="phone-stats">
+              <div class="phone-stat">
+                <div class="phone-stat-val">12</div>
+                <div class="phone-stat-lbl">Mis reportes</div>
+              </div>
+              <div class="phone-stat">
+                <div class="phone-stat-val">450</div>
+                <div class="phone-stat-lbl">Puntos</div>
+              </div>
+              <div class="phone-stat">
+                <div class="phone-stat-val">#23</div>
+                <div class="phone-stat-lbl">Ranking</div>
+              </div>
+            </div>
+            <div class="phone-card">
+              <div class="phone-card-icon" style="background:#FEF3C7">⚠️</div>
+              <div class="phone-card-info">
+                <div class="phone-card-title">Bache</div>
+                <div class="phone-card-sub">Calle 44 y 12</div>
+              </div>
+              <span class="phone-badge" style="background:#FEF3C7;color:#B45309">Pendiente</span>
+            </div>
+            <div class="phone-card">
+              <div class="phone-card-icon" style="background:#DCFCE7">💡</div>
+              <div class="phone-card-info">
+                <div class="phone-card-title">Luminaria</div>
+                <div class="phone-card-sub">Av. 7 y 50</div>
+              </div>
+              <span class="phone-badge" style="background:#DBEAFE;color:#1D4ED8">En proceso</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 
